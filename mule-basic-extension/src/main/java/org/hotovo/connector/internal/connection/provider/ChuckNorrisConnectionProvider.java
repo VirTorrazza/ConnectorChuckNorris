@@ -1,17 +1,26 @@
 package org.hotovo.connector.internal.connection.provider;
 
-import org.hotovo.connector.internal.connection.BasicConnection;
+import org.hotovo.connector.internal.config.ChuckNorrisConfig;
+import org.hotovo.connector.internal.connection.ChuckNorrisConnection;
 import org.mule.runtime.api.connection.ConnectionException;
+import org.mule.runtime.extension.api.annotation.Alias;
 import org.mule.runtime.extension.api.annotation.param.Parameter;
 import org.mule.runtime.extension.api.annotation.param.Optional;
 import org.mule.runtime.api.connection.ConnectionValidationResult;
 import org.mule.runtime.api.connection.PoolingConnectionProvider;
 import org.mule.runtime.api.connection.ConnectionProvider;
 import org.mule.runtime.api.connection.CachedConnectionProvider;
+import org.mule.runtime.extension.api.annotation.param.ParameterGroup;
 import org.mule.runtime.extension.api.annotation.param.display.DisplayName;
 
+import org.mule.runtime.extension.api.annotation.param.display.Example;
+import org.mule.runtime.extension.api.annotation.param.display.Placement;
+import org.mule.runtime.http.api.HttpService;
+import org.mule.runtime.http.api.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
 
 
 /**
@@ -25,40 +34,52 @@ import org.slf4j.LoggerFactory;
  * will be pooled and reused. There are other implementations like {@link CachedConnectionProvider} which lazily creates and
  * caches connections or simply {@link ConnectionProvider} if you want a new connection each time something requires one.
  */
-public class ChuckNorrisConnectionProvider implements PoolingConnectionProvider<BasicConnection> {
+public class ChuckNorrisConnectionProvider implements PoolingConnectionProvider<ChuckNorrisConnection> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ChuckNorrisConnectionProvider.class);
 
-    /**
-     * A parameter that is always required to be configured.
-     */
-    @Parameter
-    private String requiredParameter;
 
-    /**
-     * A parameter that is not required to be configured by the user.
-     */
-    @DisplayName("Friendly Name")
     @Parameter
-    @Optional(defaultValue = "100")
-    private int optionalParameter;
+
+    @Optional(defaultValue = "5000")
+    int connectionTimeout;
+
+
+    @Inject
+    private HttpService httpService;
+
+
+
+    @Inject
+    private HttpClient httpClient;
 
     @Override
-    public BasicConnection connect() throws ConnectionException {
-        return new BasicConnection(requiredParameter + ":" + optionalParameter);
+    public ChuckNorrisConnection connect() throws ConnectionException {
+        return new ChuckNorrisConnection(httpService,connectionTimeout);
     }
 
     @Override
-    public void disconnect(BasicConnection connection) {
+    public void disconnect(ChuckNorrisConnection connection) {
         try {
             connection.invalidate();
         } catch (Exception e) {
-            LOGGER.error("Error while disconnecting [" + connection.getId() + "]: " + e.getMessage(), e);
+            LOGGER.error("Error while disconnecting to ChuckNorris" + e.getMessage(), e);
         }
     }
 
     @Override
-    public ConnectionValidationResult validate(BasicConnection connection) {
-        return ConnectionValidationResult.success();
+    public ConnectionValidationResult validate(ChuckNorrisConnection connection) {
+        ConnectionValidationResult result;
+        try {
+            if(connection.isConnected()){
+                result = ConnectionValidationResult.success();
+            } else {
+                result = ConnectionValidationResult.failure("Connection Failed", new Exception());
+            }
+        } catch (Exception e) {
+            result = ConnectionValidationResult.failure("Connection failed: " + e.getMessage(), new Exception());
+        }
+        return result;
     }
-}
+
+        }

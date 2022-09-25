@@ -2,11 +2,11 @@
   "extensionModelLoaderDescriptor": {
     "id": "java",
     "attributes": {
-      "type": "org.mule.extension.internal.BasicExtension",
-      "version": "1.0.4-SNAPSHOT"
+      "type": "org.hotovo.connector.internal.extension.ChuckNorrisConnector",
+      "version": "1.1.1-SNAPSHOT"
     }
   },
-  "name": "Basic",
+  "name": "Chuck Norris",
   "requiredProduct": "MULE",
   "classLoaderModelLoaderDescriptor": {
     "id": "mule",
